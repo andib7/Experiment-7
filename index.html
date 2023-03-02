@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Global Sales by Year and Genre</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0"></script>
+</head>
+<body>
+    <h1>Global Sales by Year and Genre</h1>
+    <canvas id="myChart"></canvas>
+    <script>
+        // Load the CSV data file
+        fetch("vgsales.csv")
+            .then(response => response.text())
+            .then(csvData => {
+                // Parse the CSV data into an array of objects
+                const data = Papa.parse(csvData, { header: true }).data;
+                // Group the data by year and genre and sum the global sales
+                const groupedData = data.reduce((accumulator, currentValue) => {
+                    const year = currentValue.Year;
+                    const genre = currentValue.Genre;
+                    const globalSales = parseFloat(currentValue.Global_Sales);
+                    if (!accumulator[genre]) {
+                        accumulator[genre] = {};
+                    }
+                    if (!accumulator[genre][year]) {
+                        accumulator[genre][year] = 0;
+                    }
+                    accumulator[genre][year] += globalSales;
+                    return accumulator;
+                }, {});
+                // Extract the year and global sales data for each genre into separate arrays
+                const genres = Object.keys(groupedData);
+                const years = Object.keys(groupedData[genres[0]]);
+                const datasets = genres.map((genre) => {
+                    const globalSales = years.map((year) => groupedData[genre][year]);
+                    const r = Math.floor(Math.random() * 256);
+                    const g = Math.floor(Math.random() * 256);
+                    const b = Math.floor(Math.random() * 256);
+                    return {
+                        label: genre,
+                        data: globalSales,
+                        backgroundColor: `rgba(${r}, ${g}, ${b}, 0.2)`,
+                        borderColor: `rgba(${r}, ${g}, ${b}, 1)`,
+                        borderWidth: 1
+                    };
+                });
+                // Create a line chart for each genre using Chart.js
+                const ctx = document.getElementById('myChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: years,
+                        datasets: datasets
+                    },
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        }
+                    }
+                });
+            });
+    </script>
+</body>
+</html>
